@@ -1,0 +1,682 @@
+---
+title: "Honolulu"
+author: "Luciana"
+date: "1/29/2020"
+output: html_document
+---
+
+
+Has there been an uptick in calls related to homelessness in comparison to other types of calls?  (utilized Honolulu edited dataset) – 
+
+- As a percentage of all calls, calls related to homelessness have not increased. 
+
+- One interesting case is that from 2017 to 2019 there is a downward trend in the volume of all types of calls while there is an increase in calls related to homelessness. 
+
+2011 is an outlier. It would seem data was not yet tracked for this year, or at least not comprehensively. It would be important to look further into this. 
+
+The year with most calls (as a percentage of the whole and excluding 2011) related to homelessness is in 2012. After that the order from most to least reports is 2013, 2016, 2019 and 2018. 
+
+
+ - 2011 - 1 out of 13 reports (7.69%) are categorized under homeless.  
+ - 2012 - 340 out of 4221 reports (8.05%) are categorized under homeless.  
+ - 2013 - 179 out of 3106 reports (5.76 %) are categorized under homeless. 
+ - 2014 - 124 out of 2324 reports (3.07 %) are categorized under homeless. 
+ - 2015 - 71 out of 2310 (3.07 %) observations in 2015 are filed under Report Type Homeless. 
+ - 2016 - 100 out of 3182 observations (5.71 %) are filed under Report Type Homeless.Current Status of some of the reports start showing "Referred to Department". This was not the case in the prior years.   
+ - 2017 - 152 out of 4231 (3.59%) observations are filed under Report Type Homeless. More "Referred to Department".   
+ - 2018 - 123 out of 2840 (4.33%) observations are filed under Report Type Homeless. More "Referred to Department".  
+ -2019 - 61 out of 1358 (4.49%) observations are filed under Report Type Homeless. More "Referred to Department".  
+ 
+ 
+ Where are the calls coming from? 
+ 
+ 
+- Interesting examples? 
+- Search for any terms referring to homelessness under other terminology/ or reports filed as homelessness that are actually something else (campers for example)
+are there more reports in locations experimenting gentrification (year by year)?
+written by citizens/ gov officials 
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## R Markdown
+
+```{r}
+rm(list = ls())
+```
+
+
+```{r}
+# load libraries for leaflet - map 
+library(dplyr)
+library(rgdal)
+library(ggplot2)
+library(leaflet)
+# set factors to false
+options(stringsAsFactors = FALSE)
+
+
+```
+
+
+```{r}
+library(tokenizers)
+# install.packages('tm')
+library(tm)
+library(tidyverse)
+library(janitor)
+library(arcos)
+library(scales)
+library(revgeo)
+library(ggrepel)
+library(tidycensus)
+library(readr)
+library(viridis)
+library(mapview)
+library(ggthemes)
+library(datasets)
+library(plotly)
+library(lubridate)
+library(ggmap)
+library(tidyr)
+library(tigris)
+library(revgeo)
+library(sf)
+library(tidyverse)
+library(tokenizers)
+
+census_api_key ("eca10bc32a0b2c31610123ac74938aecd2228af6")
+install = TRUE
+```
+
+
+311 Calls fom 2011 to 2019 in Honolulu. Non-emergency/ complaints. 
+
+```{r}
+# read Honolulu data 
+
+Honolulu_2011_2019 <-read_csv ("data/Honolulu_311_2011_2019.csv")
+
+```
+
+
+```{r}
+
+# need to eliminate year 1899 as it marks fields without year 
+Honolulu_Edit <- Honolulu_2011_2019 %>% 
+  filter(!str_detect(YEAR, '1899')) %>%
+  separate( location, into = c("latitude","longitude"), sep = ",", extra = "merge") %>% 
+  print()
+
+
+```
+
+```{r}
+
+ # eliminate parathenses signs 
+Honolulu_Edit$latitude = substring(Honolulu_Edit$latitude, 2,11) 
+Honolulu_Edit$longitude = substring(Honolulu_Edit$longitude, 1,13)
+
+
+print(Honolulu_Edit)
+```
+
+
+```{r}
+
+
+Honolulu_Edit$latitude= as.numeric(as.character(Honolulu_Edit$latitude)) 
+
+Honolulu_Edit$longitude = as.numeric(as.character(Honolulu_Edit$longitude)) 
+
+print(Honolulu_Edit)
+
+
+``` 
+
+
+
+
+```{r}
+
+# filter report type homeless 
+Honolulu_Edit_Homeless <- Honolulu_Edit %>%
+  filter(ReportType == 'Homeless') %>% 
+  print()
+
+```
+
+
+```{r}
+#group by report type 
+# 1151 report types are homeless 
+
+Honolulu_Edit %>% group_by(ReportType) %>% 
+  summarize(count = n()) %>% 
+  arrange(desc(count))
+``` 
+
+
+2011 - 
+
+```{r}
+
+# 1  out of 13 reports (7.69% ) are categorized under homeless. In 2011 only one Report type for Homeless is populated. Homeless ( Couldn't choose other option for issue. Correct issue bulb burnt out/flashing on light pole. ) - 	12/6/11 18:22  Why were there so few reports in 2011? Did data tracking not begin until later? 
+ 
+
+Honolulu_2011 <-  Honolulu_Edit  %>%
+  filter(YEAR =='2011') %>% 
+  print()
+
+Honolulu_2011 <- Honolulu_2011 %>% filter(ReportType == 'Homeless') %>% print(Honolulu_2011)
+
+``` 
+
+2012 - 
+
+```{r}
+#  2012 -  340  out of 4221 reports (8.05% )  are categorized under homeless.  Many of the case description udner homeless mention "	Mopeds are stored here" or things like " This moped frequently parks on the sidewalk in front of 1505 Kewalo st. It's there now. License # R 39814". This might be a report type error.  Homeless camp/ encampment 
+  
+Honolulu_2012 <-  Honolulu_Edit  %>%
+  filter(YEAR =='2012') %>% 
+  print()
+
+Honolulu_2012 <- Honolulu_2012 %>% filter(ReportType == 'Homeless')
+``` 
+
+2013 -
+
+```{r}
+
+# 179 out of 3106 reports ( 5.76 % )  are categorized under homeless. Homeless camp/ encampment/ smell. Certain complaints are not regarding homlessness, for example "This is a no parking zone until 9 am but many people park here from 8:40 or 8:45 am everyday. Common description is also ilegal storage / building material / ilegal parking.   
+
+
+Honolulu_2013 <-  Honolulu_Edit  %>%
+  filter(YEAR =='2013') %>% 
+  print()
+
+
+Honolulu_2013 <- Honolulu_2013  %>% filter(ReportType == 'Homeless') %>% print()
+``` 
+
+
+2014 - 
+
+```{r}
+# 124 out of 2324 reports (3.07 %)  are categorized under homeless.  
+
+Honolulu_2014 <-  Honolulu_Edit  %>%
+  filter(YEAR =='2014') %>% 
+  print()
+
+Honolulu_2014 <- Honolulu_2014 %>% filter(ReportType == 'Homeless') %>% print()
+``` 
+
+
+2015 -
+
+```{r}
+
+# 71 out of 2310  (3.07 %) observations in 2015 are filed under Report Type Homeless. 
+
+Honolulu_2015 <-  Honolulu_Edit  %>%
+  filter(YEAR =='2015') %>% 
+  print()
+
+Honolulu_2015 <- Honolulu_2015 %>% filter(ReportType == 'Homeless') %>% print()
+``` 
+
+
+2016 
+```{r}
+
+# 2016 - 100 out of 3182 observations (5.71 %) are filed under Report Type Homeless. CurrentStatus of some of the reports start showing "Referred to Department". This was not the case in the prior years.   
+
+
+Honolulu_2016 <-  Honolulu_Edit  %>%
+  filter(YEAR =='2016') %>% 
+  print()
+
+Honolulu_2016  <- Honolulu_2016 %>% filter(ReportType == 'Homeless') %>% print()
+```
+
+
+2017 - 152 out of 4231 (3.59%) observations are filed under Report Type Homeless. More "Referred to Department". 
+```{r}
+
+Honolulu_2017 <-  Honolulu_Edit  %>%
+  filter(YEAR =='2017') %>% 
+  print()
+
+Honolulu_2017 <- Honolulu_2017  %>% filter(ReportType == 'Homeless') %>% print()
+
+```
+
+
+
+2018 - 123 out of 2840 (4.33%) observations are filed under Report Type Homeless. More "Referred to Department". 
+```{r} 
+
+Honolulu_2018 <-  Honolulu_Edit  %>%
+  filter(YEAR =='2018') %>% 
+  print()
+
+Honolulu_2018 <-  Honolulu_2018 %>% filter(ReportType == 'Homeless') %>% print()
+
+```
+
+2019 - 61 out of 1358 (4.49%) observations are filed under Report Type Homeless. More "Referred to Department". 
+```{r}
+
+Honolulu_2019 <-  Honolulu_Edit  %>%
+  filter(YEAR =='2019') %>% 
+  print()
+
+Honolulu_2019 <- Honolulu_2019  %>% filter(ReportType == 'Homeless') %>% print() 
+
+``` 
+
+
+
+Tokenizer- Breakdown of descriptions into words / 2 words / etc 
+
+```{r}
+Honolulu_Edit_x <- Honolulu_Edit %>%
+  clean_names() %>%
+  mutate(description_edit = tolower(description)) %>%
+  mutate(description_edit = removePunctuation(description_edit)) %>%
+  mutate(description_edit = removeWords(description_edit, stopwords("english"))) %>%
+  mutate(description_edit = stripWhitespace(description_edit)) %>%
+  mutate(description_edit = str_trim(description_edit)) %>%
+  select(description_edit)
+
+
+dfCorpus <- Corpus(VectorSource(Honolulu_Edit_x$description_edit)) 
+
+x <- scan_tokenizer(dfCorpus)
+
+y <- as_tibble(x) %>%
+  mutate(value = str_remove(value, "c\\(")) %>%
+  mutate(value = removePunctuation(value)) %>%
+  group_by(value) %>%
+  summarise(count=n()) %>%
+  arrange(desc(count))
+
+```
+
+```{r}
+
+# lower case description column in Honolulu_Edit 
+Honolulu_Edit[[4]] <- tolower(Honolulu_Edit[[4]])
+
+```
+
+
+```{r}
+#Honolulu_tokenize <- Honolulu_Edit %>% tokenize_words(Honolulu_Edit[[4]]) 
+
+x <- Honolulu_Edit %>%
+  mutate(x = tokenize_words(Description)) %>%
+  mutate(x = removePunctuation(Description))
+
+``` 
+
+From the analysis above,terms that stood out were the following: 
+
+- Homeless:  Homeless was utlized often in descriptions, it was generally categorized as "homeless" and sometimes "other". This means that when I run the analysis to map out all homeless report types, some of them might not be captured. Furthermore, some people spelled homeless (homless) wrong. 
+- Urinating/feces: These terms were utlized often in the descriptions, oten in reference to homeless individuals. They were often in conjunction with other tems like  homeless and camping. Many were categorized as "other".
+- Congregating: Congregating was used to describe homeless individuals, sometimes with other terms such as campers and squatters. 
+- Encampment/ camping/ campsite/ campsites: Most are often categorized as "homeless". A few are categorized as "other". 
+- sleeps/sleeping - Sleep and sleeping often refer to homeless individuals. They are often categorized as "homeless" and are in sentences in conjunction with women,men,woman and women. 
+
+
+ 
+future analysis :  tokenize by two words - *** pending/ focusing on census tracts first as suggested by team. 
+ 
+ 
+
+Leaflet analysis 2011- 2019 
+
+```{r}
+#All homeless report type from 2011 to 2019 
+# Color Scheme
+binpal <- colorBin("plasma", Honolulu_Edit_Homeless$YEAR, 5, pretty = FALSE)
+
+
+# Show first 20 rows from the `quakes` dataset
+leaflet(data = Honolulu_Edit_Homeless) %>% addTiles() %>%
+  addMarkers(~longitude, ~latitude, , popup = ~as.character(YEAR), label = ~as.character(YEAR))
+``` 
+
+```{r}
+leaflet(Honolulu_Edit_Homeless) %>% addTiles() %>%
+  addMarkers( ~longitude, ~latitude, , popup = ~as.character(YEAR), label = ~as.character(YEAR),
+  clusterOptions = markerClusterOptions(freezeAtZoom = ),
+)
+```
+
+
+MAPS BY YEAR TO SEE PROGRESSION IN LOCATIONS
+
+
+```{r}
+# 2011 does not pull a map because there is only 1 reported homeless type case, in which the latitude and longitude values are missing. 
+leaflet(Honolulu_2011) %>% addTiles() %>%
+  addMarkers( ~longitude, ~latitude, , popup = ~as.character(YEAR), label = ~as.character(YEAR),
+  clusterOptions = markerClusterOptions(freezeAtZoom = ),
+)
+```
+
+```{r}
+# 2011 does not pull a map because there is only 1 reported homeless type case, in which the latitude and longitude values are missing. 
+leaflet(Honolulu_2012) %>% addTiles() %>%
+  addMarkers( ~longitude, ~latitude, , popup = ~as.character(YEAR), label = ~as.character(YEAR),
+  clusterOptions = markerClusterOptions(freezeAtZoom = ),
+)
+```
+
+```{r}
+# 2013 
+
+leaflet(Honolulu_2013) %>% addTiles() %>%
+  addMarkers( ~longitude, ~latitude, , popup = ~as.character(YEAR), label = ~as.character(YEAR),
+  clusterOptions = markerClusterOptions(freezeAtZoom = ),
+)
+```
+
+```{r}
+# 2014 
+leaflet(Honolulu_2014) %>% addTiles() %>%
+  addMarkers( ~longitude, ~latitude, , popup = ~as.character(YEAR), label = ~as.character(YEAR),
+  clusterOptions = markerClusterOptions(freezeAtZoom = ),
+)
+```
+
+```{r}
+# 2015 does not pull a map because there is only 1 reported homeless type case, in which the latitude and longitude values are missing. 
+leaflet(Honolulu_2015) %>% addTiles() %>%
+  addMarkers( ~longitude, ~latitude, , popup = ~as.character(YEAR), label = ~as.character(YEAR),
+  clusterOptions = markerClusterOptions(freezeAtZoom = ),
+)
+```
+
+```{r}
+# 2016 
+leaflet(Honolulu_2016) %>% addTiles() %>%
+  addMarkers( ~longitude, ~latitude, , popup = ~as.character(YEAR), label = ~as.character(YEAR),
+  clusterOptions = markerClusterOptions(freezeAtZoom = ),
+)
+```
+
+```{r}
+# 2017 
+leaflet(Honolulu_2017) %>% addTiles() %>%
+  addMarkers( ~longitude, ~latitude, , popup = ~as.character(YEAR), label = ~as.character(YEAR),
+  clusterOptions = markerClusterOptions(freezeAtZoom = ),
+)
+```
+
+```{r}
+# 2018 
+leaflet(Honolulu_2018) %>% addTiles() %>%
+  addMarkers( ~longitude, ~latitude, , popup = ~as.character(YEAR), label = ~as.character(YEAR),
+  clusterOptions = markerClusterOptions(freezeAtZoom = ),
+)
+```
+
+```{r}
+# 2019 
+leaflet(Honolulu_2019) %>% addTiles() %>%
+  addMarkers( ~longitude, ~latitude, , popup = ~as.character(YEAR), label = ~as.character(YEAR),
+  clusterOptions = markerClusterOptions(freezeAtZoom = ),
+)
+```
+
+
+
+Latitude and Longitude converted to census tracts - 
+
+- Honolulu_2011 does not work as there is only one case and it is missing longitude data. 
+
+# Using TIGRIS, I turned all of the latitude and longitude coordinates into the GEOID. 
+
+
+
+2011 does not work as there is only one case, with missing longitude 
+
+
+2012 - 
+
+```{r}
+
+coord_2012 <- Honolulu_2012 %>% 
+ drop_na(longitude)   
+
+``` 
+
+```{r}
+coord_2012 <- coord_2012 %>% 
+  mutate(census_tract = apply(coord_2012, 1, function(row) call_geolocator_latlon(row['latitude'], row['longitude']))) %>% rename("GEOID" = "census_tract")
+```
+
+
+
+2013- 
+
+```{r}
+
+coord_2013 <- Honolulu_2013  %>% 
+drop_na(longitude)   
+
+``` 
+
+```{r} 
+
+coord_2013 <- coord_2013 %>% 
+mutate(census_tract = apply(coord_2013, 1, function(row) call_geolocator_latlon(row['latitude'], row['longitude']))) %>% rename("GEOID" = "census_tract")
+```
+
+
+
+2014 
+
+```{r}
+
+coord_2014 <- Honolulu_2014  %>% 
+drop_na(longitude)   
+
+``` 
+
+
+```{r} 
+
+coord_2014 <- coord_2014 %>% 
+mutate(census_tract = apply(coord_2014, 1, function(row) call_geolocator_latlon(row['latitude'], row['longitude']))) %>% rename("GEOID" = "census_tract")
+```
+
+
+
+
+2015
+
+```{r}
+
+coord_2015 <- Honolulu_2015  %>% 
+drop_na(longitude)  
+
+``` 
+
+
+```{r} 
+
+coord_2015 <- coord_2015 %>% 
+mutate(census_tract = apply(coord_2015, 1, function(row) call_geolocator_latlon(row['latitude'], row['longitude']))) %>% rename("GEOID" = "census_tract")
+```
+
+
+
+2016
+
+```{r}
+
+coord_2016 <- Honolulu_2016 %>% 
+drop_na(longitude)  
+
+``` 
+
+
+```{r} 
+
+coord_2016 <- coord_2016 %>% 
+mutate(census_tract = apply(coord_2016, 1, function(row) call_geolocator_latlon(row['latitude'], row['longitude'])))%>% rename("GEOID" = "census_tract")
+```
+
+
+
+2017
+
+```{r}
+
+coord_2017 <- Honolulu_2017 %>% 
+drop_na(longitude)  
+
+``` 
+
+
+```{r} 
+
+coord_2017 <- coord_2017 %>% 
+mutate(census_tract = apply(coord_2017, 1, function(row) call_geolocator_latlon(row['latitude'], row['longitude']))) %>% rename("GEOID" = "census_tract")
+```
+
+
+
+
+2018
+
+```{r}
+
+coord_2018 <- Honolulu_2018 %>% 
+drop_na(longitude)  
+  
+
+``` 
+
+
+```{r} 
+
+coord_2018 <- coord_2018 %>% 
+mutate(census_tract = apply(coord_2018, 1, function(row) call_geolocator_latlon(row['latitude'], row['longitude']))) %>% rename("GEOID" = "census_tract")
+```
+
+
+
+2019 - 
+
+```{r}
+
+coord_2019 <- Honolulu_2019  %>%  
+drop_na(longitude)  
+  
+
+``` 
+
+
+```{r} 
+
+coord_2019 <- coord_2019 %>% 
+mutate(census_tract = apply(coord_2019, 1, function(row) call_geolocator_latlon(row['latitude'], row['longitude']))) %>% rename("GEOID" = "census_tract")
+```
+
+
+Pulling up American Community Survey data to analyze on other variables
+
+
+```{r}
+v17 <- load_variables(2018, "acs5", cache = TRUE)
+View(v17)
+``` 
+
+
+Median Household Income Analysis  - Pulling ACS data on median household income to then join by tract on Coords 
+ 
+ 
+- 2011 - Not analyzing on 2011- not enough data. 
+
+
+
+2012 join with median household income data - 
+
+```{r}
+median_household_income_tract_2012 <- get_acs(state = "Hawaii", geography = "tract", variables = c("B19013_001"), year = 2012)
+
+
+``` 
+
+```{r}
+median_household_income_coord_2012 <- median_household_income_tract_2012 %>% 
+inner_join(coord_2012  , by=c('GEOID')) 
+``` 
+
+
+2013 join with median household income data - 
+
+```{r}
+median_household_income_tract_2013 <- get_acs(state = "Hawaii", geography = "tract", variables = c("B19013_001"), year = 2013)
+
+```  
+
+
+```{r}
+median_household_income_coord_2013 <- median_household_income_tract_2013 %>% 
+inner_join(coord_2013 , by=c('GEOID')) 
+``` 
+
+
+
+2014 join with median household income data - 
+
+
+```{r}
+median_household_income_tract_2014 <- get_acs(state = "Hawaii", geography = "tract", variables = c("B19013_001"), year = 2014)
+
+```  
+
+
+2015 join with median household income data - 
+
+
+
+```{r}
+median_household_income_tract_2015 <- get_acs(state = "Hawaii", geography = "tract", variables = c("B19013_001"), year = 2015)
+
+``` 
+
+
+2016 join with median household income data - 
+
+
+
+```{r}
+median_household_income_tract_2016 <- get_acs(state = "Hawaii", geography = "tract", variables = c("B19013_001"), year = 2016)
+
+``` 
+
+
+```{r}
+median_household_income_tract_2017 <- get_acs(state = "Hawaii", geography = "tract", variables = c("B19013_001"), year = 2017)
+
+``` 
+
+
+```{r}
+median_household_income_tract_2018 <- get_acs(state = "Hawaii", geography = "tract", variables = c("B19013_001"), year = 2018)
+
+```  
+
+
+```{r}
+median_household_income_tract_2019 <- get_acs(state = "Hawaii", geography = "tract", variables = c("B19013_001"), year = 2019)
+
+``` 
