@@ -104,38 +104,24 @@ Honolulu_2011_2019 <-read_csv ("data/Honolulu_311_2011_2019.csv")
 ```{r}
 
 # need to eliminate year 1899 as it marks fields without year 
-Honolulu_Edit <- Honolulu_2011_2019 %>% 
-  filter(!str_detect(YEAR, '1899')) %>%
-  separate( location, into = c("latitude","longitude"), sep = ",", extra = "merge") %>% 
-  print()
+options(digits=20)
+Honolulu_Edit <- Honolulu_2011_2019 %>%
+filter(!str_detect(YEAR, '1899'))  %>%
+separate( location, into = c("latitude","longitude"), sep = ",", extra = "merge") %>%
+mutate(latitude = str_remove(latitude, "\\(")) %>%
+mutate(longitude = str_remove(longitude, "\\)")) %>%
+mutate(latitude = as.numeric(latitude)) %>%
+mutate(longitude = as.numeric(longitude)) %>%
+print() 
 
+Honolulu_Edit_homeless <-  Honolulu_Edit %>%
+filter(ReportType == "Homeless")
 
-```
-
-```{r}
-
- # eliminate parathenses signs 
-Honolulu_Edit$latitude = substring(Honolulu_Edit$latitude, 2,11) 
-Honolulu_Edit$longitude = substring(Honolulu_Edit$longitude, 1,13)
-
-
-print(Honolulu_Edit)
-```
-
-
-```{r}
-
-
-Honolulu_Edit$latitude= as.numeric(as.character(Honolulu_Edit$latitude)) 
-
-Honolulu_Edit$longitude = as.numeric(as.character(Honolulu_Edit$longitude)) 
-
-print(Honolulu_Edit)
-
+# making sure there are no missing values in lat and lon
+b <- Honolulu_Edit_homeless %>%
+filter(is.na(longitude)) 
 
 ``` 
-
-
 
 
 ```{r}
@@ -166,11 +152,9 @@ Honolulu_Edit %>% group_by(ReportType) %>%
  
 
 Honolulu_2011 <-  Honolulu_Edit  %>%
-  filter(YEAR =='2011') %>% 
-  print()
+  filter(YEAR =='2011') 
 
-Honolulu_2011 <- Honolulu_2011 %>% filter(ReportType == 'Homeless') %>% print(Honolulu_2011)
-
+Honolulu_2011 <- Honolulu_2011 %>% filter(ReportType == 'Homeless') 
 ``` 
 
 2012 - 
@@ -179,8 +163,7 @@ Honolulu_2011 <- Honolulu_2011 %>% filter(ReportType == 'Homeless') %>% print(Ho
 #  2012 -  340  out of 4221 reports (8.05% )  are categorized under homeless.  Many of the case description udner homeless mention "	Mopeds are stored here" or things like " This moped frequently parks on the sidewalk in front of 1505 Kewalo st. It's there now. License # R 39814". This might be a report type error.  Homeless camp/ encampment 
   
 Honolulu_2012 <-  Honolulu_Edit  %>%
-  filter(YEAR =='2012') %>% 
-  print()
+  filter(YEAR =='2012')
 
 Honolulu_2012 <- Honolulu_2012 %>% filter(ReportType == 'Homeless')
 ``` 
@@ -193,11 +176,9 @@ Honolulu_2012 <- Honolulu_2012 %>% filter(ReportType == 'Homeless')
 
 
 Honolulu_2013 <-  Honolulu_Edit  %>%
-  filter(YEAR =='2013') %>% 
-  print()
+  filter(YEAR =='2013') 
 
-
-Honolulu_2013 <- Honolulu_2013  %>% filter(ReportType == 'Homeless') %>% print()
+Honolulu_2013 <- Honolulu_2013  %>% filter(ReportType == 'Homeless')
 ``` 
 
 
@@ -207,10 +188,8 @@ Honolulu_2013 <- Honolulu_2013  %>% filter(ReportType == 'Homeless') %>% print()
 # 124 out of 2324 reports (3.07 %)  are categorized under homeless.  
 
 Honolulu_2014 <-  Honolulu_Edit  %>%
-  filter(YEAR =='2014') %>% 
-  print()
-
-Honolulu_2014 <- Honolulu_2014 %>% filter(ReportType == 'Homeless') %>% print()
+  filter(YEAR =='2014') 
+Honolulu_2014 <- Honolulu_2014 %>% filter(ReportType == 'Homeless') 
 ``` 
 
 
@@ -221,10 +200,9 @@ Honolulu_2014 <- Honolulu_2014 %>% filter(ReportType == 'Homeless') %>% print()
 # 71 out of 2310  (3.07 %) observations in 2015 are filed under Report Type Homeless. 
 
 Honolulu_2015 <-  Honolulu_Edit  %>%
-  filter(YEAR =='2015') %>% 
-  print()
+  filter(YEAR =='2015') 
 
-Honolulu_2015 <- Honolulu_2015 %>% filter(ReportType == 'Homeless') %>% print()
+Honolulu_2015 <- Honolulu_2015 %>% filter(ReportType == 'Homeless')
 ``` 
 
 
@@ -235,10 +213,9 @@ Honolulu_2015 <- Honolulu_2015 %>% filter(ReportType == 'Homeless') %>% print()
 
 
 Honolulu_2016 <-  Honolulu_Edit  %>%
-  filter(YEAR =='2016') %>% 
-  print()
+  filter(YEAR =='2016')
 
-Honolulu_2016  <- Honolulu_2016 %>% filter(ReportType == 'Homeless') %>% print()
+Honolulu_2016  <- Honolulu_2016 %>% filter(ReportType == 'Homeless')
 ```
 
 
@@ -246,11 +223,8 @@ Honolulu_2016  <- Honolulu_2016 %>% filter(ReportType == 'Homeless') %>% print()
 ```{r}
 
 Honolulu_2017 <-  Honolulu_Edit  %>%
-  filter(YEAR =='2017') %>% 
-  print()
-
-Honolulu_2017 <- Honolulu_2017  %>% filter(ReportType == 'Homeless') %>% print()
-
+  filter(YEAR =='2017')
+Honolulu_2017 <- Honolulu_2017  %>% filter(ReportType == 'Homeless')
 ```
 
 
@@ -259,10 +233,9 @@ Honolulu_2017 <- Honolulu_2017  %>% filter(ReportType == 'Homeless') %>% print()
 ```{r} 
 
 Honolulu_2018 <-  Honolulu_Edit  %>%
-  filter(YEAR =='2018') %>% 
-  print()
+  filter(YEAR =='2018') 
 
-Honolulu_2018 <-  Honolulu_2018 %>% filter(ReportType == 'Homeless') %>% print()
+Honolulu_2018 <-  Honolulu_2018 %>% filter(ReportType == 'Homeless') 
 
 ```
 
@@ -270,10 +243,9 @@ Honolulu_2018 <-  Honolulu_2018 %>% filter(ReportType == 'Homeless') %>% print()
 ```{r}
 
 Honolulu_2019 <-  Honolulu_Edit  %>%
-  filter(YEAR =='2019') %>% 
-  print()
+  filter(YEAR =='2019')
 
-Honolulu_2019 <- Honolulu_2019  %>% filter(ReportType == 'Homeless') %>% print() 
+Honolulu_2019 <- Honolulu_2019  %>% filter(ReportType == 'Homeless')
 
 ``` 
 
@@ -448,51 +420,31 @@ Latitude and Longitude converted to census tracts -
 
 2012 - 
 
-```{r}
 
+```{r}
 coord_2012 <- Honolulu_2012 %>% 
- drop_na(longitude)   
-
-``` 
-
-```{r}
-coord_2012 <- coord_2012 %>% 
-  mutate(census_tract = apply(coord_2012, 1, function(row) call_geolocator_latlon(row['latitude'], row['longitude']))) %>% rename("GEOID" = "census_tract")
+  mutate(census_tract = apply(Honolulu_2012, 1, function(row) call_geolocator_latlon(row['latitude'], row['longitude']))) %>% rename("GEOID" = "census_tract")
 ```
 
 
 
 2013- 
 
-```{r}
-
-coord_2013 <- Honolulu_2013  %>% 
-drop_na(longitude)   
-
-``` 
-
 ```{r} 
 
-coord_2013 <- coord_2013 %>% 
-mutate(census_tract = apply(coord_2013, 1, function(row) call_geolocator_latlon(row['latitude'], row['longitude']))) %>% rename("GEOID" = "census_tract")
+coord_2013 <- Honolulu_2013 %>% 
+mutate(census_tract = apply(Honolulu_2013, 1, function(row) call_geolocator_latlon(row['latitude'], row['longitude']))) %>% rename("GEOID" = "census_tract")
 ```
 
 
 
 2014 
 
-```{r}
-
-coord_2014 <- Honolulu_2014  %>% 
-drop_na(longitude)   
-
-``` 
-
 
 ```{r} 
 
-coord_2014 <- coord_2014 %>% 
-mutate(census_tract = apply(coord_2014, 1, function(row) call_geolocator_latlon(row['latitude'], row['longitude']))) %>% rename("GEOID" = "census_tract")
+coord_2014 <- Honolulu_2014 %>% 
+mutate(census_tract = apply(Honolulu_2014, 1, function(row) call_geolocator_latlon(row['latitude'], row['longitude']))) %>% rename("GEOID" = "census_tract")
 ```
 
 
@@ -500,54 +452,33 @@ mutate(census_tract = apply(coord_2014, 1, function(row) call_geolocator_latlon(
 
 2015
 
-```{r}
-
-coord_2015 <- Honolulu_2015  %>% 
-drop_na(longitude)  
-
-``` 
-
 
 ```{r} 
 
-coord_2015 <- coord_2015 %>% 
-mutate(census_tract = apply(coord_2015, 1, function(row) call_geolocator_latlon(row['latitude'], row['longitude']))) %>% rename("GEOID" = "census_tract")
+coord_2015 <- Honolulu_2015 %>% 
+mutate(census_tract = apply(Honolulu_2015, 1, function(row) call_geolocator_latlon(row['latitude'], row['longitude']))) %>% rename("GEOID" = "census_tract")
 ```
 
 
 
 2016
 
-```{r}
-
-coord_2016 <- Honolulu_2016 %>% 
-drop_na(longitude)  
-
-``` 
-
 
 ```{r} 
 
-coord_2016 <- coord_2016 %>% 
-mutate(census_tract = apply(coord_2016, 1, function(row) call_geolocator_latlon(row['latitude'], row['longitude'])))%>% rename("GEOID" = "census_tract")
+coord_2016 <-  Honolulu_2016 %>% 
+mutate(census_tract = apply( Honolulu_2016, 1, function(row) call_geolocator_latlon(row['latitude'], row['longitude'])))%>% rename("GEOID" = "census_tract")
 ```
 
 
 
 2017
 
-```{r}
-
-coord_2017 <- Honolulu_2017 %>% 
-drop_na(longitude)  
-
-``` 
-
 
 ```{r} 
 
-coord_2017 <- coord_2017 %>% 
-mutate(census_tract = apply(coord_2017, 1, function(row) call_geolocator_latlon(row['latitude'], row['longitude']))) %>% rename("GEOID" = "census_tract")
+coord_2017 <-  Honolulu_2017 %>% 
+mutate(census_tract = apply( Honolulu_2017, 1, function(row) call_geolocator_latlon(row['latitude'], row['longitude']))) %>% rename("GEOID" = "census_tract")
 ```
 
 
@@ -555,38 +486,23 @@ mutate(census_tract = apply(coord_2017, 1, function(row) call_geolocator_latlon(
 
 2018
 
-```{r}
-
-coord_2018 <- Honolulu_2018 %>% 
-drop_na(longitude)  
-  
-
-``` 
-
 
 ```{r} 
 
-coord_2018 <- coord_2018 %>% 
-mutate(census_tract = apply(coord_2018, 1, function(row) call_geolocator_latlon(row['latitude'], row['longitude']))) %>% rename("GEOID" = "census_tract")
+coord_2018 <-Honolulu_2018 %>% 
+mutate(census_tract = apply(Honolulu_2018, 1, function(row) call_geolocator_latlon(row['latitude'], row['longitude']))) %>% rename("GEOID" = "census_tract")
 ```
 
 
 
 2019 - 
 
-```{r}
-
-coord_2019 <- Honolulu_2019  %>%  
-drop_na(longitude)  
-  
-
-``` 
 
 
 ```{r} 
 
-coord_2019 <- coord_2019 %>% 
-mutate(census_tract = apply(coord_2019, 1, function(row) call_geolocator_latlon(row['latitude'], row['longitude']))) %>% rename("GEOID" = "census_tract")
+coord_2019 <-Honolulu_2019 %>% 
+mutate(census_tract = apply(Honolulu_2019, 1, function(row) call_geolocator_latlon(row['latitude'], row['longitude']))) %>% rename("GEOID" = "census_tract")
 ```
 
 
