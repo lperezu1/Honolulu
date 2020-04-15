@@ -101,52 +101,28 @@ Honolulu_2011_2019 <-read_csv ("data/Honolulu_311_2011_2019.csv")
 
 ```
 
-
 ```{r}
 
 # need to eliminate year 1899 as it marks fields without year 
-Honolulu_Edit <- Honolulu_2011_2019 %>% 
-  filter(!str_detect(YEAR, '1899')) %>%
-  separate( location, into = c("latitude","longitude"), sep = ",", extra = "merge") %>% 
-  print()
+options(digits=20)
+Honolulu_Edit <- Honolulu_2011_2019 %>%
+filter(!str_detect(YEAR, '1899'))  %>%
+separate( location, into = c("latitude","longitude"), sep = ",", extra = "merge") %>%
+mutate(latitude = str_remove(latitude, "\\(")) %>%
+mutate(longitude = str_remove(longitude, "\\)")) %>%
+mutate(latitude = as.numeric(latitude)) %>%
+mutate(longitude = as.numeric(longitude)) %>%
+print() 
 
+Honolulu_Edit_homeless <-  Honolulu_Edit %>%
+filter(ReportType == "Homeless")
 
-```
-
-```{r}
-
- # eliminate parathenses signs 
-Honolulu_Edit$latitude = substring(Honolulu_Edit$latitude, 2,11) 
-Honolulu_Edit$longitude = substring(Honolulu_Edit$longitude, 1,13)
-
-
-print(Honolulu_Edit)
-```
-
-
-```{r}
-
-
-Honolulu_Edit$latitude= as.numeric(as.character(Honolulu_Edit$latitude)) 
-
-Honolulu_Edit$longitude = as.numeric(as.character(Honolulu_Edit$longitude)) 
-
-print(Honolulu_Edit)
-
+# making sure there are no missing values in lat and lon
+b <- Honolulu_Edit_homeless %>%
+filter(is.na(longitude)) 
 
 ``` 
 
-
-
-
-```{r}
-
-# filter report type homeless 
-Honolulu_Edit_Homeless <- Honolulu_Edit %>%
-  filter(ReportType == 'Homeless') %>% 
-  print()
-
-```
 
 
 ```{r}
@@ -642,9 +618,6 @@ rename(low_income_loss_gain = strong_expansion_decline) %>%
 
 # Hawaii_gentrification total of 316 GEOID's - filtered out Nan values in low_income_pct_loss_gain (before 3)
 
-
-
-
 hawaii_gentrification_geoid<- hawaii_homeless_geoid %>%
   inner_join(Hawaii_gentrification, by=c("GEOID"))
 
@@ -662,26 +635,38 @@ hawaii_gentrification_geoid<- hawaii_homeless_geoid %>%
 Y2012 <-hawaii_gentrification_geoid %>%
 filter(YEAR == "2012") %>% 
 mutate(Y2012 = count) %>% 
-select(GEOID, Y2012, low_income_loss_gain, tot_pop16, low_income_pct_loss_gain) %>% print()
+select(GEOID, Y2012, low_income_loss_gain, tot_pop16, low_income_pct_loss_gain) 
+
+
+# %>% print()
 
 
 Y2019 <-hawaii_gentrification_geoid %>%
 filter(YEAR == "2019") %>% 
 mutate(Y2019 = count) %>% 
-select(GEOID, Y2019, low_income_loss_gain, tot_pop16, low_income_pct_loss_gain) %>% print()
+select(GEOID, Y2019, low_income_loss_gain, tot_pop16, low_income_pct_loss_gain) 
+
+#%>% print()
 
 
-Y2012_Y2019 <- Y2012 %>% full_join(Y2019, by = c("GEOID")) %>% 
-select(GEOID, Y2012, Y2019, low_income_loss_gain.x, tot_pop16.x, low_income_pct_loss_gain.x) %>%
-mutate(percentage_change = (((Y2019 - Y2012) / Y2012) * 100)) %>%
-arrange(desc(percentage_change)) %>%
-mutate(low_income_loss_gain = low_income_loss_gain.x) %>% 
-mutate(tot_pop16 = tot_pop16.x) %>% 
-mutate(low_income_pct_loss_gain = low_income_pct_loss_gain.x) %>% 
-select(GEOID, Y2012, Y2019, percentage_change, low_income_loss_gain, tot_pop16, low_income_pct_loss_gain) %>% 
+Y2012_Y2019 <- Y2012 %>% 
+  full_join(Y2019, by = c("GEOID")) %>% 
+  mutate(Y2012 = as.double(Y2012),
+         Y2019 = as.double(Y2019)) %>%
+  mutate(Y2012 = if_else(is.na(Y2012), 0,Y2012)) %>%
+  mutate(Y2019 = if_else(is.na(Y2019), 0, Y2019)) %>%
+  select(GEOID, Y2012, Y2019, low_income_loss_gain.x, tot_pop16.x, low_income_pct_loss_gain.x) %>%
+  mutate(percentage_change = (((Y2019 - Y2012) / Y2012) * 100)) %>%
+  arrange(desc(percentage_change)) %>%
+  mutate(low_income_loss_gain = low_income_loss_gain.x) %>% 
+  mutate(tot_pop16 = tot_pop16.x) %>% 
+  mutate(low_income_pct_loss_gain = low_income_pct_loss_gain.x) %>% 
+  select(GEOID, Y2012, Y2019, percentage_change, low_income_loss_gain, tot_pop16, low_income_pct_loss_gain)
+
+#%>% 
 print(Y2012_Y2019)
 
-  
+glimpse(Y2012)
 
 
 #make NA values 0
@@ -691,6 +676,11 @@ Y2012_Y2019[is.na(Y2012_Y2019)] <- 0
 print(Y2012_Y2019)
 
 # so the table despite full join is leaving values for 2019 empty when there is not a match 
+
+plot(Y2012_Y2019$`percentage_change`, Y2012_Y2019$`low_income_pct_loss_gain`, xlab =
+       "% Change in Homeless Encampment Calls 2012-2019", ylab =
+       "% Change in Low Income Pop 2000-2016")
+
 
 
 
@@ -789,4 +779,5 @@ median_household_income_tract_2018 <- get_acs(state = "Hawaii", geography = "tra
 median_household_income_tract_2019 <- get_acs(state = "Hawaii", geography = "tract", variables = c("B19013_001"), year = 2019)
 
 ``` 
+
 
