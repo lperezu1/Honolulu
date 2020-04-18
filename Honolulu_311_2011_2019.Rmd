@@ -86,6 +86,7 @@ library(revgeo)
 library(sf)
 library(tidyverse)
 library(tokenizers)
+library(corrr)
 
 census_api_key ("eca10bc32a0b2c31610123ac74938aecd2228af6")
 install = TRUE
@@ -318,16 +319,16 @@ Leaflet analysis 2011- 2019
 ```{r}
 #All homeless report type from 2011 to 2019 
 # Color Scheme
-binpal <- colorBin("plasma", Honolulu_Edit_Homeless$YEAR, 5, pretty = FALSE)
+binpal <- colorBin("plasma", Honolulu_Edit_homeless$YEAR, 5, pretty = FALSE)
 
 
 # Show first 20 rows from the `quakes` dataset
-leaflet(data = Honolulu_Edit_Homeless) %>% addTiles() %>%
+leaflet(data = Honolulu_Edit_homeless) %>% addTiles() %>%
   addMarkers(~longitude, ~latitude, , popup = ~as.character(YEAR), label = ~as.character(YEAR))
 ``` 
 
 ```{r}
-leaflet(Honolulu_Edit_Homeless) %>% addTiles() %>%
+leaflet(Honolulu_Edit_homeless) %>% addTiles() %>%
   addMarkers( ~longitude, ~latitude, , popup = ~as.character(YEAR), label = ~as.character(YEAR),
   clusterOptions = markerClusterOptions(freezeAtZoom = ),
 )
@@ -576,7 +577,7 @@ Latitude and Longitude converted to census tracts and then joined with database 
 ```{r}
 
 # all geolocated homeless data joined 
-#checked- 10870 rows which is what the original he_data_cleaned dataset had
+
 
 hawaii_homeless_geoid <- rbind(coord_2012, coord_2013, coord_2014, coord_2015, coord_2016, coord_2017, coord_2018, coord_2019) %>% select("Description", "YEAR", "GEOID") 
 
@@ -619,9 +620,13 @@ rename(low_income_loss_gain = strong_expansion_decline) %>%
 # Hawaii_gentrification total of 316 GEOID's - filtered out Nan values in low_income_pct_loss_gain (before 3)
 
 hawaii_gentrification_geoid<- hawaii_homeless_geoid %>%
-  inner_join(Hawaii_gentrification, by=c("GEOID"))
+  inner_join(Hawaii_gentrification, by=c("GEOID")) %>% print()
 
 
+
+hawaii_gentrification_geoid_2019 <-hawaii_gentrification_geoid %>% filter(YEAR == 2019)
+
+glimpse(hawaii_gentrification_geoid_2019)
 
 #Hawaii_gentrification<- Hawaii_gentrification %>% 
 #drop_na(low_income_pct_loss_gain)   
@@ -688,96 +693,233 @@ plot(Y2012_Y2019$`percentage_change`, Y2012_Y2019$`low_income_pct_loss_gain`, xl
 ``` 
 
 
+```{r}
+
+# from 2012 to 2019 the amount of homeless report types actually go down considerably (as a percentage_change)
+ 
+# Y2012_Y2019 %>%  arrange(percentage_change) %>% print()
+
+
+# The only zips that see an increase are filtered below: 
+
+Y2012_Y2019_f <- Y2012_Y2019 %>%  filter(Y2019 >= Y2012) %>% arrange(percentage_change) %>% print()
+
+# Utilizing only the GEOIDS that saw a percentage increase in homeless report calls from 2012 to 2019, is there a relationship between percentage change and low_income_pc_loss_gain?
+
+
+plot(Y2012_Y2019_f$`percentage_change`, Y2012_Y2019_f$`low_income_pct_loss_gain`, xlab =
+       "% Change in Homeless Encampment Calls 2012-2019", ylab =
+       "% Change in Low Income Pop 2000-2016")
+
+
+# nope! 
+
+
+
+
+``` 
+
+ANALYSIS OF ONLY 2019 DATA 
 
 Pulling up American Community Survey data to analyze on other variables
 
 
 ```{r}
-v17 <- load_variables(2018, "acs5", cache = TRUE)
-View(v17)
+v18 <- load_variables(2018, "acs5", cache = TRUE)
+View(v18)
 ``` 
 
 
-Median Household Income Analysis  - Pulling ACS data on median household income to then join by tract on Coords 
+Median Household Income Analysis  - Pulling ACS data on median household income to then join by hawaii_gentrification_geoid_2019 
  
- 
-- 2011 - Not analyzing on 2011- not enough data. 
-
-
-
-2012 join with median household income data - 
-
-```{r}
-median_household_income_tract_2012 <- get_acs(state = "Hawaii", geography = "tract", variables = c("B19013_001"), year = 2012)
-
-
-``` 
-
-```{r}
-median_household_income_coord_2012 <- median_household_income_tract_2012 %>% 
-inner_join(coord_2012  , by=c('GEOID')) 
-``` 
-
-
-2013 join with median household income data - 
-
-```{r}
-median_household_income_tract_2013 <- get_acs(state = "Hawaii", geography = "tract", variables = c("B19013_001"), year = 2013)
-
-```  
 
 
 ```{r}
-median_household_income_coord_2013 <- median_household_income_tract_2013 %>% 
-inner_join(coord_2013 , by=c('GEOID')) 
-``` 
 
-
-
-2014 join with median household income data - 
-
-
-```{r}
-median_household_income_tract_2014 <- get_acs(state = "Hawaii", geography = "tract", variables = c("B19013_001"), year = 2014)
-
-```  
-
-
-2015 join with median household income data - 
-
-
-
-```{r}
-median_household_income_tract_2015 <- get_acs(state = "Hawaii", geography = "tract", variables = c("B19013_001"), year = 2015)
-
-``` 
-
-
-2016 join with median household income data - 
-
-
-
-```{r}
-median_household_income_tract_2016 <- get_acs(state = "Hawaii", geography = "tract", variables = c("B19013_001"), year = 2016)
-
-``` 
-
-
-```{r}
-median_household_income_tract_2017 <- get_acs(state = "Hawaii", geography = "tract", variables = c("B19013_001"), year = 2017)
-
-``` 
-
-
-```{r}
+# NO 2019 DATA 
 median_household_income_tract_2018 <- get_acs(state = "Hawaii", geography = "tract", variables = c("B19013_001"), year = 2018)
 
+glimpse(median_household_income_tract_2018)
+
 ```  
 
-
 ```{r}
-median_household_income_tract_2019 <- get_acs(state = "Hawaii", geography = "tract", variables = c("B19013_001"), year = 2019)
+glimpse(hawaii_gentrification_geoid_2019)
 
 ``` 
 
 
+```{r}
+# In 2019, more than half of the 46 homeless-related 311 calls came from demographics where the median household income is higher than $70,000. 
+
+income_2019 <- hawaii_gentrification_geoid_2019 %>%
+  inner_join(median_household_income_tract_2018, by=("GEOID")) %>%
+  rename("MHI" = "estimate") %>%
+  select(GEOID, MHI, count, low_income_loss_gain, tot_pop16, low_income_pct_loss_gain) %>%
+  arrange(desc(MHI)) %>% print()
+
+income_2019 %>% arrange(desc(count))
+
+```
+
+
+```{r}
+
+# never really done a quintile analysis so playing around here
+
+
+# The code below takes our GEOIDS and sorts them by the median household income, and then groups them into 5 buckets.   It then calculates the average median houshold income and average reports per geoid 
+
+income_2019 %>%
+ ungroup() %>%
+ mutate(quintile = ntile(MHI, 5)) %>%
+ group_by(quintile) %>%
+ summarise(median_income_rate = mean(MHI),
+           average_calls_per_geoid = mean(count)) %>% print()
+
+
+# Group 1 is the place with the highest homeless report calls. Locations with more calls have lower median household income? 
+``` 
+
+```{r}
+
+
+
+ggplot(income_2019 ) +
+  geom_point(aes(MHI, count )) +
+  geom_smooth(aes(MHI, count), method = "lm", se = FALSE)  +
+  scale_y_continuous(labels = comma) +
+  scale_x_continuous(labels = comma)  +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(x="Median household income 2018", y="Homeless report calls per GEOID", title="", caption = "Source:")
+
+#  "line of best fit" is indicating a negative correlation (but just barely). As reports go up,median household income goes down. A few outliers might be worth looking into. 
+
+
+```
+
+```{r}
+income_2019  %>%
+  ungroup() %>%
+  select(MHI, count) %>%
+  correlate()
+
+# negative relationship but not strong or really worth exploring. 
+```
+
+
+
+
+
+Race
+
+
+
+
+```{r}
+# Using census data to see the comparrisson of white residents and black residents in the tracts where the 311 calls came from.
+HI_black_tract <- get_acs(state = "Hawaii", geography = "tract", variables = c("B02001_003"), year = 2018)
+
+
+HI_black_tract <- HI_black_tract %>%
+select (GEOID, estimate) %>% 
+rename( Black = estimate) %>% 
+print()
+
+HI_white_tract <- get_acs(state = "Hawaii", geography = "tract", variables = c("B02001_002"), year = 2018)
+
+
+
+HI_white_tract <- HI_white_tract %>%
+select (GEOID, estimate) %>% 
+rename( White = estimate) %>% 
+print()
+
+
+HI_race_tract <- get_acs(state = "Hawaii", geography = "tract", variables = c("B02001_001"), year = 2018)
+
+
+
+HI_race_tract  <- HI_race_tract  %>%
+select (GEOID, estimate) %>% 
+rename( all_races = estimate) %>% 
+print()
+
+
+Hi_races <- HI_race_tract %>%
+inner_join(HI_white_tract, by=("GEOID")) %>% print()
+
+
+Hi_races <-  Hi_races %>% 
+inner_join(HI_black_tract, by=("GEOID")) %>% print() 
+
+
+Hi_races <- Hi_races  %>%
+mutate(percentage_white = White/all_races) %>% 
+mutate(percentage_black = Black/all_races) %>% 
+select(GEOID, all_races, percentage_white, percentage_black) %>% 
+print ()
+
+
+```
+
+
+```{r}
+
+races_hawaii <- hawaii_gentrification_geoid_2019 %>%
+  inner_join(Hi_races, by=("GEOID")) %>%
+  select(GEOID,count, all_races, percentage_white, percentage_black, low_income_loss_gain, tot_pop16, low_income_pct_loss_gain) %>%
+  arrange(desc(percentage_black)) %>% print()
+
+
+
+``` 
+
+```{r}
+
+#black population correlated with homeless report counts per GEOID 
+
+races_hawaii %>%
+  ungroup() %>%
+  select(percentage_black, count) %>%
+  correlate()
+
+# positive relationship but not strong or really worth exploring. 
+```
+
+```{r}
+
+
+#black population correlated with low_income_pct_loss_gain per geoid 
+
+
+races_hawaii %>%
+  ungroup() %>%
+  select(percentage_black, low_income_pct_loss_gain) %>%
+  correlate()
+
+# positive relationship but not strong at all.  
+```
+
+
+
+
+
+```{r}
+
+
+
+ggplot(races_hawaii) +
+  geom_point(aes(percentage_black, count )) +
+  geom_smooth(aes(percentage_black, count ), method = "lm", se = FALSE)  +
+  scale_y_continuous(labels = comma) +
+  scale_x_continuous(labels = comma)  +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(x="percentage African American population per GEO", y="Homeless report calls per GEOID", title="", caption = "Source:")
+
+#  "line of best fit" is indicating a positive correlation (but just barely). As reports go up so does the African American population.  
+
+```
+
+
+As of now, after analyzing the median household income and race, the data is not showing strong relationships.  It is showing that as the median household income declines, there are more homeless report calls. Furthermore, as the popilation of African Americans increase, the amount of calls increase. 
